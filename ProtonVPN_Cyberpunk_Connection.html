@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ProtonVPN Map Connection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #070c1f, #1b0030);
+      font-family: 'Courier New', Courier, monospace;
+      color: #00ffcc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      display: flex;
+      gap: 40px;
+      transform: scale(0.9);
+    }
+
+    .phone-frame, .backend-panel {
+      width: 300px;
+      height: 600px;
+      background: #111;
+      border-radius: 40px;
+      padding: 20px;
+      box-shadow: 0 0 20px #00ffee99;
+      border: 2px solid #00ffee44;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .phone-title, .panel-title {
+      font-size: 20px;
+      text-align: center;
+      margin-bottom: 15px;
+      color: #00ffee;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 18px;
+      margin-top: 30px;
+      color: #ffffff;
+    }
+
+    .connect-button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 30px auto;
+      width: 120px;
+      height: 40px;
+      background: #00ffaa;
+      color: #000;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 10px #00ffaa; }
+      50% { box-shadow: 0 0 20px #00ffaa; }
+    }
+
+    .map-container {
+      margin-top: 10px;
+      width: 100%;
+      height: 240px;
+      position: relative;
+      display: none;
+    }
+
+    .map-container svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .pulse {
+      fill: #00ffcc;
+      stroke: #00ffaa;
+      stroke-width: 2px;
+      animation: pulseGlow 1.5s infinite;
+    }
+
+    @keyframes pulseGlow {
+      0% { r: 4; opacity: 1; }
+      50% { r: 6; opacity: 0.6; }
+      100% { r: 4; opacity: 1; }
+    }
+
+    .line-animate {
+      stroke-dasharray: 200;
+      stroke-dashoffset: 200;
+      animation: dash 2s linear forwards;
+    }
+
+    @keyframes dash {
+      to { stroke-dashoffset: 0; }
+    }
+
+    .terminal {
+      background: #0f0f1a;
+      height: 500px;
+      overflow-y: auto;
+      border: 1px solid #00ffaa55;
+      padding: 10px;
+      color: #00ff88;
+      font-size: 14px;
+      line-height: 1.4em;
+    }
+
+    .log-line {
+      opacity: 0;
+      animation: fadeIn 1s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Left Panel: ProtonVPN Mobile UI -->
+    <div class="phone-frame">
+      <div class="phone-title">ProtonVPN</div>
+      <div class="status" id="vpnStatus">Disconnected</div><div style="text-align:center; margin-top:10px;"><label for="protocol" style="font-size:14px;">Protocol:</label><select id="protocol" style="margin-left:10px; padding:4px; font-size:14px;"><option value="OpenVPN">OpenVPN</option><option value="WireGuard">WireGuard</option></select></div>
+      <div class="connect-button" onclick="startConnection()">Connect</div>
+
+      <!-- World Map + Animation -->
+      <div class="map-container" id="mapBlock">
+        <svg viewBox="0 0 300 200" id="vpnMap">
+          <circle id="userDot" cx="60" cy="140" r="4" class="pulse" />
+          <circle id="icelandDot" cx="150" cy="100" r="4" class="pulse" />
+          <circle id="serverDot" cx="230" cy="60" r="4" class="pulse" />
+          <line id="hop1" x1="60" y1="140" x2="150" y2="100" stroke="#00ffaa" stroke-width="2" class="line-animate" />
+          <line id="hop2" x1="150" y1="100" x2="230" y2="60" stroke="#00ffaa" stroke-width="2" class="line-animate" />
+        <text x="60" y="135" fill="#00ffaa" font-size="10">US (Home)</text>
+    <text x="150" y="95" fill="#00ffaa" font-size="10">IS (Secure Core)</text>
+    <text x="230" y="55" fill="#00ffaa" font-size="10">CH (Exit Node)</text>
+</svg>
+      </div>
+    </div>
+
+    <!-- Right Panel: Backend Process -->
+    <div class="backend-panel">
+      <div class="panel-title">VPN Backend</div>
+      <div class="terminal" id="terminalLog">
+        <!-- Logs appear here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function startConnection() {
+      const logBox = document.getElementById('terminalLog');
+      const status = document.getElementById('vpnStatus');
+      const mapBlock = document.getElementById('mapBlock');
+      logBox.innerHTML = '';
+      mapBlock.style.display = 'block';
+      // Restart SVG animation
+      document.querySelectorAll('.line-animate').forEach(el => {
+        el.style.animation = 'none';
+        void el.offsetWidth;
+        el.style.animation = null;
+      });
+      status.innerText = 'Connecting...';
+
+      const logs = [
+        'Launching ProtonVPN app...',
+        'Secure Core route enabled. First hop: Iceland...',
+        'Establishing encrypted tunnel (OpenVPN)...',
+        'Encrypting DNS & IP routing...',
+        'Final hop: Switzerland. Verifying secure handshake...',
+        '[✓] Connected: ch-03.protonvpn.net'
+      ];
+
+      logs.forEach((log, i) => {
+        setTimeout(() => {
+          const div = document.createElement('div');
+          div.className = 'log-line';
+          div.style.animationDelay = `${i * 0.5}s`;
+          div.textContent = '> ' + log;
+          logBox.appendChild(div);
+          logBox.scrollTop = logBox.scrollHeight;
+          if (i === logs.length - 1) {
+            status.innerText = 'Connected (' + document.getElementById('protocol').value + ')';
+setTimeout(() => {
+  status.innerText = 'Auto-Disconnect Triggered';
+  document.getElementById('terminalLog').innerHTML += '<div class="log-line">> [✗] Connection dropped due to idle timeout.</div>';
+  document.getElementById('mapBlock').style.display = 'none';
+}, 8000);
+          }
+        }, i * 1000);
+      });
+    }
+  </script>
+</body>
+</html>

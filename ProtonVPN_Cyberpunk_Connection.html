@@ -50,9 +50,7 @@
   </style>
 </head>
 <body>
-  <div class="terminal" id="terminal">
-    <div>> <span class="typing" id="cmd1">sudo protonvpn-cli login scavenger</span><span class="cursor"></span></div>
-  </div>
+  <div class="terminal" id="terminal"></div>
 
   <script>
     const terminal = document.getElementById('terminal');
@@ -69,10 +67,14 @@
     ];
 
     function runSimulation() {
-      terminal.innerHTML = `<div>> <span class="typing" id="cmd1">sudo protonvpn-cli login scavenger</span><span class="cursor"></span></div>`;
-      const cursor = document.querySelector('.cursor');
-      let delay = 2000;
+      terminal.innerHTML = ""; // Clear previous output
 
+      // Add command and blinking cursor
+      const firstLine = document.createElement("div");
+      firstLine.innerHTML = `> <span class="typing" id="cmd1">${steps[0]}</span><span class="cursor"></span>`;
+      terminal.appendChild(firstLine);
+
+      let delay = 2000;
       for (let i = 1; i < steps.length; i++) {
         setTimeout(() => {
           const line = document.createElement('div');
@@ -84,12 +86,8 @@
         delay += 2000;
       }
 
-      // Remove cursor after animation, then restart after 5 seconds
-      setTimeout(() => {
-        if (cursor) cursor.remove();
-      }, delay - 1000);
-
-      setTimeout(runSimulation, delay + 5000);
+      // Loop again after delay
+      setTimeout(runSimulation, delay + 3000); // wait 3 sec after last line
     }
 
     runSimulation();

@@ -56,7 +56,6 @@
 
   <script>
     const terminal = document.getElementById('terminal');
-    const cursor = document.querySelector('.cursor');
     const steps = [
       "> sudo protonvpn-cli login scavenger",
       "[>] Authenticating...",
@@ -69,26 +68,31 @@
       "[✓] ProtonVPN is now active."
     ];
 
-    function appendLine(content, delay) {
+    function runSimulation() {
+      terminal.innerHTML = `<div>> <span class="typing" id="cmd1">sudo protonvpn-cli login scavenger</span><span class="cursor"></span></div>`;
+      const cursor = document.querySelector('.cursor');
+      let delay = 2000;
+
+      for (let i = 1; i < steps.length; i++) {
+        setTimeout(() => {
+          const line = document.createElement('div');
+          line.className = 'line';
+          line.textContent = steps[i];
+          terminal.appendChild(line);
+          terminal.scrollTop = terminal.scrollHeight;
+        }, delay);
+        delay += 2000;
+      }
+
+      // Remove cursor after animation, then restart after 5 seconds
       setTimeout(() => {
-        const line = document.createElement('div');
-        line.className = 'line';
-        line.textContent = content;
-        terminal.appendChild(line);
-        terminal.scrollTop = terminal.scrollHeight;
-      }, delay);
+        if (cursor) cursor.remove();
+      }, delay - 1000);
+
+      setTimeout(runSimulation, delay + 5000);
     }
 
-    let delay = 2000;
-    for (let i = 1; i < steps.length; i++) {
-      appendLine(steps[i], delay);
-      delay += 2000;
-    }
-
-    // Remove blinking cursor after final step
-    setTimeout(() => {
-      cursor.remove();
-    }, delay + 1000);
+    runSimulation();
   </script>
 </body>
 </html>
